@@ -18,17 +18,22 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { OnboardingCheck } from "./components/OnboardingCheck";
 import { IncomingConnectionRequestDialog } from "./components/IncomingConnectionRequestDialog";
 import { MatchNotificationDialog } from "./components/MatchNotificationDialog";
+import { useConnectionRequestStatus } from "./hooks/useConnectionRequestStatus";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <IncomingConnectionRequestDialog />
-        <MatchNotificationDialog />
+const App = () => {
+  // Initialize connection request status listener
+  useConnectionRequestStatus();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <IncomingConnectionRequestDialog />
+          <MatchNotificationDialog />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
@@ -53,6 +58,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

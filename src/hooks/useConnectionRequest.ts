@@ -20,6 +20,33 @@ export const useConnectionRequest = () => {
 
     setIsLoading(true);
     try {
+      // Check if already connected or request exists
+      const pairId = [user.id, receiverId].sort().join('_');
+      
+      const { data: existingMatch } = await supabase
+        .from('matches')
+        .select('id, status')
+        .eq('pair_id', pairId)
+        .maybeSingle();
+
+      if (existingMatch && existingMatch.status === 'connected') {
+        toast.error("You're already connected with this person");
+        return { success: false };
+      }
+
+      const { data: existingRequest } = await supabase
+        .from('connection_requests')
+        .select('id, status')
+        .eq('sender_id', user.id)
+        .eq('receiver_id', receiverId)
+        .in('status', ['pending'])
+        .maybeSingle();
+
+      if (existingRequest) {
+        toast.error("Connection request already sent");
+        return { success: false };
+      }
+
       // Check if receiver has auto-accept enabled
       const { data: receiverProfile, error: profileError } = await supabase
         .from('profiles')
