@@ -3,57 +3,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { useConnectionRequest } from "@/hooks/useConnectionRequest";
 import { useIncomingConnectionRequests } from "@/hooks/useIncomingConnectionRequests";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 
 export const IncomingConnectionRequestDialog = () => {
-  const { user } = useAuth();
   const { currentRequest, removeRequest } = useIncomingConnectionRequests();
   const { acceptConnectionRequest, rejectConnectionRequest, isLoading } = useConnectionRequest();
-  const [autoAccept, setAutoAccept] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
 
-  // Check user's auto-accept setting
+  // Only show dialog for manual acceptance (auto-accept is handled when request is sent)
   useEffect(() => {
-    if (!user?.id) return;
-
-    const fetchAutoAcceptSetting = async () => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('auto_accept_connections')
-        .eq('id', user.id)
-        .single();
-
-      setAutoAccept(data?.auto_accept_connections === true);
-    };
-
-    fetchAutoAcceptSetting();
-  }, [user?.id]);
-
-  // Handle incoming requests
-  useEffect(() => {
-    if (!currentRequest || autoAccept === null) return;
-
-    if (autoAccept) {
-      // Auto-accept the request
-      handleAutoAccept();
-    } else {
-      // Show dialog for manual acceptance
-      setOpen(true);
-    }
-  }, [currentRequest, autoAccept]);
-
-  const handleAutoAccept = async () => {
     if (!currentRequest) return;
-
-    console.log('Auto-accepting connection request:', currentRequest);
-    const result = await acceptConnectionRequest(currentRequest.id, currentRequest.sender_id);
-    
-    if (result.success) {
-      removeRequest(currentRequest.id);
-    }
-  };
+    // Show dialog for manual acceptance
+    setOpen(true);
+  }, [currentRequest]);
 
   const handleAccept = async () => {
     if (!currentRequest) return;
@@ -77,7 +38,7 @@ export const IncomingConnectionRequestDialog = () => {
     }
   };
 
-  if (autoAccept || !currentRequest) {
+  if (!currentRequest) {
     return null;
   }
 

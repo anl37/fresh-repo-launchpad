@@ -24,7 +24,8 @@ export const useMatchNotifications = () => {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'matches'
+          table: 'matches',
+          filter: `status=eq.connected`
         },
         async (payload) => {
           const match = payload.new;
@@ -32,6 +33,40 @@ export const useMatchNotifications = () => {
           // Check if this match involves the current user
           if (match.uid_a === user.id || match.uid_b === user.id) {
             console.log('New match notification:', match);
+            
+            // Determine the other user's ID
+            const otherUserId = match.uid_a === user.id ? match.uid_b : match.uid_a;
+            
+            // Fetch the other user's profile
+            const { data: otherUserProfile } = await supabase
+              .from('profiles')
+              .select('name')
+              .eq('id', otherUserId)
+              .single();
+
+            setNewMatch({
+              matchId: match.id,
+              matchedUserId: otherUserId,
+              matchedUserName: otherUserProfile?.name || 'Someone',
+              timestamp: match.created_at
+            });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'matches',
+          filter: `status=eq.connected`
+        },
+        async (payload) => {
+          const match = payload.new;
+          
+          // Check if this match involves the current user
+          if (match.uid_a === user.id || match.uid_b === user.id) {
+            console.log('Match updated to connected:', match);
             
             // Determine the other user's ID
             const otherUserId = match.uid_a === user.id ? match.uid_b : match.uid_a;
